@@ -1,0 +1,33 @@
+use ('empresa');
+db.dropDatabase();
+db.empleados.insertMany([
+  { nombre: "Maria Lopez", edad: 30, puesto: "Contadora" },
+  { nombre: "Juan Fernandez", edad: 23, puesto: "Recepcionista" },
+  { nombre: "Santiago Alvarez", edad: 38, puesto: "Encargado de Deposito" }
+]);
+db.empleados.updateOne(
+    { nombre: "Maria Lopez" },
+    {
+      $set: {
+        direccion: {
+          calle: "Av. Pellegrini 1234",
+          ciudad: "Rosario",
+          codigo_postal: 2000
+        }
+      }
+    }
+  );
+  
+  db.empleados.updateOne(
+    { nombre: "Santiago Alvarez" },
+    {
+      $set: {
+        direccion: {
+          calle: "Calle 8 Nº456",
+          ciudad: "La Plata",
+          codigo_postal: 1900
+        }
+      }
+    }
+  );
+  db.empleados.find();

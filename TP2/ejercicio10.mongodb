@@ -1,0 +1,8 @@
+use ('empresa');
+db.dropDatabase();
+db.createUser({ user: "admin", pwd: "contraseña", roles: ["readWrite", "dbAdmin"] })
+
+// EN TERMINAL
+//mongodump --db empresa --out. \copia
+
+//mongorestore --db empresa .\copia\empresa
