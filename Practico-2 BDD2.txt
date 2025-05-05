@@ -1,0 +1,149 @@
+use empresa;
+// Ejercicio 1
+db.empleados.insertMany([
+  { nombre: "Maria Lopez", edad: 30, puesto: "Contadora" },
+  { nombre: "Juan Fernandez", edad: 23, puesto: "Recepcionista" },
+  { nombre: "Santiago Alvarez", edad: 38, puesto: "Encargado de Deposito" }
+]);
+
+db.empleados.updateOne(
+  { nombre: "Maria Lopez" },
+  { $set: { edad: 31 } }
+);
+
+db.empleados.deleteOne({ puesto: "Recepcionista" });
+
+db.empleados.find();
+
+// Ejercicio 2: Empleados con edad entre 25 y 40 años
+db.empleados.find({
+  edad: { $gte: 25, $lte: 40 }
+});
+
+// Ejercicio 3: Mostrar solo nombre y puesto, sin _id
+db.empleados.find(
+  {},
+  { _id: 0, nombre: 1, puesto: 1 }
+);
+
+// Ejercicio 4: Agregar documento embebido 'direccion'
+
+db.empleados.updateOne(
+  { nombre: "Maria Lopez" },
+  {
+    $set: {
+      direccion: {
+        calle: "Av. Pellegrini 1234",
+        ciudad: "Rosario",
+        codigo_postal: 2000
+      }
+    }
+  }
+);
+
+db.empleados.updateOne(
+  { nombre: "Santiago Alvarez" },
+  {
+    $set: {
+      direccion: {
+        calle: "Calle 8 Nº456",
+        ciudad: "La Plata",
+        codigo_postal: 1900
+      }
+    }
+  }
+);
+
+// Ejercicio 5 total de ventas por producto
+db.ventas.insertMany([
+  { producto: "Laptop", cantidad: 2, precio_unitario: 800000 },
+  { producto: "Laptop", cantidad: 1, precio_unitario: 800000 },
+  { producto: "Mouse", cantidad: 5, precio_unitario: 20000 },
+  { producto: "Teclado", cantidad: 3, precio_unitario: 50000 },
+  { producto: "Mouse", cantidad: 2, precio_unitario: 20000 }
+]);
+
+db.ventas.aggregate([
+  {
+    $project: {
+      producto: 1,
+      total_venta: { $multiply: ["$cantidad", "$precio_unitario"] }
+    }
+  },
+  {
+    $group: {
+      _id: "$producto",
+      total_ventas: { $sum: "$total_venta" }
+    }
+  }
+]);
+
+//Ejercicio 6 crear un indice compuesto de clientes
+db.clientes.insertMany([
+  {nombre: "Carlos", apellido:"Ramirez"},
+  {nombre: "Lucia", apellido:"Fernandez"},
+  {nombre: "Andres", apellido:"Morales"}
+]);
+
+db.clientes.createIndex({nombre: 1, apellido: 1})
+
+//Ejercicio 7 coleccion que referencia a la otra
+const cursoId1 = ObjectId()
+const cursoId2 = ObjectId()
+const cursoId3 = ObjectId()
+db.cursos.insertMany([
+  {_id:cursoId1, nombre: "Matematica"},
+  {_id:cursoId2, nombre: "Historia", },
+  {_id:cursoId3, nombre: "Arte", }
+]);
+
+db.alumnos.insertMany([
+  {curso_id:cursoId1, nombre: "Juan", apellido:"Ramirez"},
+  {curso_id:cursoId2, nombre: "Pedro", apellido:"Fernandez"},
+  {curso_id:cursoId3, nombre: "Jorge", apellido:"Morales"}
+]);
+
+//Ejercicio 8 lookup para combinar alumnos y cursos
+const cursoId1 = ObjectId()
+const cursoId2 = ObjectId()
+const cursoId3 = ObjectId()
+db.cursos.insertMany([
+  {_id:cursoId1, nombre: "Matematica"},
+  {_id:cursoId2, nombre: "Historia", },
+  {_id:cursoId3, nombre: "Arte", }
+]);
+
+db.alumnos.insertMany([
+  {curso_id:cursoId1, nombre: "Juan", apellido:"Ramirez"},
+  {curso_id:cursoId2, nombre: "Pedro", apellido:"Fernandez"},
+  {curso_id:cursoId3, nombre: "Jorge", apellido:"Morales"}
+]);
+
+const resultado = db.cursos.aggregate([
+  {
+    $lookup: {
+      from: "alumnos",
+      localField: "_id",
+      foreignField: "curso_id",
+      as: "alumnos"
+    }
+  }
+])
+resultado.forEach(printjson)
+
+//Ejercicio 9
+El replicaset crea copias de los datos en múltiples servidores(estos otros servidores son identicos al original), 
+si uno falla otro toma su lugar lo que permite seguir teniendo acceso a los datos y a la base de datos, 
+evitando interrupciones.
+
+El sharding divide la base de datos en partes mas pequeñas que se pueden distribuir en distintos servidores,
+haciendo que mejora la capacidad de almacenamiento, si uno falla los demas siguen funcionando, hace que el
+rendimiento mejore al evitar un cuello de botella.
+
+
+//Ejercicio 10 usuario con permisos de lectura y escritura, backup y restauracion
+use empresa;
+db.createUser({ user: "admin", pwd: "contraseña", roles: ["readWrite", "dbAdmin"] })
+
+mongodump --db empresa --out /carpeta/copia_de_seguridad
+mongorestore --db empresa /carpeta/copia_de_seguridad/empresa
