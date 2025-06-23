@@ -1,0 +1,10 @@
+use ('empresa');
+db.dropDatabase();
+db.empleados.insertMany([
+  { nombre: "Maria Lopez", edad: 30, puesto: "Contadora" },
+  { nombre: "Juan Fernandez", edad: 23, puesto: "Recepcionista" },
+  { nombre: "Santiago Alvarez", edad: 38, puesto: "Encargado de Deposito" }
+]);
+db.empleados.find({
+    edad: { $gte: 25, $lte: 40 }
+  });

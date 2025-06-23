@@ -1,0 +1,17 @@
+use ('empresa');
+db.dropDatabase();
+const cursoId1 = ObjectId()
+const cursoId2 = ObjectId()
+const cursoId3 = ObjectId()
+db.cursos.insertMany([
+  {_id:cursoId1, nombre: "Matematica"},
+  {_id:cursoId2, nombre: "Historia", },
+  {_id:cursoId3, nombre: "Arte", }
+]);
+
+db.alumnos.insertMany([
+  {curso_id:cursoId1, nombre: "Juan", apellido:"Ramirez"},
+  {curso_id:cursoId2, nombre: "Pedro", apellido:"Fernandez"},
+  {curso_id:cursoId3, nombre: "Jorge", apellido:"Morales"}
+]);
+
