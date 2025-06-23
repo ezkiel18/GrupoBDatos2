@@ -1,0 +1,199 @@
+Ejercicio 2:
+Tablas:
+CREATE TABLE Estudiantes (
+    id_estudiante INT PRIMARY KEY,
+    nombre VARCHAR(100)
+);
+
+CREATE TABLE Cursos (
+    id_curso INT PRIMARY KEY,
+    nombre_curso VARCHAR(100)
+);
+
+CREATE TABLE Matriculas (
+    id_matricula INT PRIMARY KEY,
+    id_estudiante INT,
+    id_curso INT,
+    fecha_matricula DATE,
+    FOREIGN KEY (id_estudiante) REFERENCES Estudiantes(id_estudiante),
+    FOREIGN KEY (id_curso) REFERENCES Cursos(id_curso)
+);
+
+Datos que violan la integridad referencial
+INSERT INTO Matriculas (id_matricula, id_estudiante, id_curso, fecha_matricula)
+VALUES (1, 999, 888, '2025-04-22');
+
+Ejercicio 3:
+Tabla:
+CREATE TABLE cuentas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titular VARCHAR(100),
+    saldo DECIMAL(10,2) NOT NULL
+);
+
+INSERT INTO cuentas (titular, saldo)
+VALUES ('Juan', 1000.00);
+
+READ COMMITED:
+SESION 1: (TRANSACCION A)
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+START TRANSACTION;
+
+SELECT saldo FROM cuentas WHERE titular = 'Juan';
+UPDATE cuentas
+SET saldo = 800
+WHERE titular = 'Juan';
+
+SESION 2: (TRANSACCION B)
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+START TRANSACTION;
+SELECT saldo FROM cuentas WHERE titular = 'Juan';
+UPDATE cuentas
+SET saldo = 1500
+WHERE titular = 'Juan';
+
+COMMIT;
+
+RESULTADO FINAL:
+SELECT saldo FROM cuentas WHERE titular = 'Juan';
+
+SERIALIZABLE:
+SESION 1 (TRANSACCION A)
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+START TRANSACTION;
+SELECT saldo FROM cuentas WHERE titular = 'Juan';
+UPDATE cuentas
+SET saldo = 800
+WHERE titular = 'Juan';
+SESION 2 (TRANSACCION B)
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+START TRANSACTION;
+SELECT saldo FROM cuentas WHERE titular = 'Juan';
+
+UPDATE cuentas
+SET saldo = 1300
+WHERE titular = 'Juan';
+
+COMMIT;
+
+SELECT saldo FROM cuentas WHERE titular = 'Juan';
+
+EJERCICIO 7:
+CREATE TABLE cuentas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titular VARCHAR(100),
+    saldo DECIMAL(10,2) NOT NULL
+);
+INSERT INTO cuentas (titular, saldo) VALUES ('Eze', 2500.00);
+
+CREATE USER 'analista'@'localhost' IDENTIFIED BY 'clave_segura';
+GRANT SELECT ON banco.cuentas TO 'analista'@'localhost';
+
+USE banco;
+SELECT * FROM cuentas;
+-- (funciona)
+
+INSERT INTO cuentas (titular, saldo) VALUES ('Pedro', 3000.00);
+-- (No deberia funcionar)
+
+EJERCICIO 8:
+
+CREATE TABLE clientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100),
+    correo VARCHAR(100)
+);
+
+CREATE TABLE auditoria_clientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    operacion VARCHAR(10),
+    id_cliente INT,
+    nombre_anterior VARCHAR(100),
+    correo_anterior VARCHAR(100),
+    nombre_nuevo VARCHAR(100),
+    correo_nuevo VARCHAR(100),
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+TRIGGER PARA INSERT
+DELIMITER $$
+
+CREATE TRIGGER aud_clientes_insert
+AFTER INSERT ON clientes
+FOR EACH ROW
+BEGIN
+    INSERT INTO auditoria_clientes (operacion, id_cliente, nombre_nuevo, correo_nuevo)
+    VALUES ('INSERT', NEW.id, NEW.nombre, NEW.correo);
+END $$
+
+DELIMITER ;
+
+TRIGGER PARA UPDATE:
+DELIMITER $$
+
+CREATE TRIGGER aud_clientes_update
+AFTER UPDATE ON clientes
+FOR EACH ROW
+BEGIN
+    INSERT INTO auditoria_clientes (
+        operacion, id_cliente,
+        nombre_anterior, correo_anterior,
+        nombre_nuevo, correo_nuevo
+    )
+    VALUES (
+        'UPDATE', OLD.id,
+        OLD.nombre, OLD.correo,
+        NEW.nombre, NEW.correo
+    );
+END $$
+
+DELIMITER ;
+
+TRIGGER PARA DELETE:
+DELIMITER $$
+
+CREATE TRIGGER aud_clientes_delete
+AFTER DELETE ON clientes
+FOR EACH ROW
+BEGIN
+    INSERT INTO auditoria_clientes (
+        operacion, id_cliente,
+        nombre_anterior, correo_anterior
+    )
+    VALUES (
+        'DELETE', OLD.id,
+        OLD.nombre, OLD.correo
+    );
+END $$
+
+DELIMITER ;
+
+PROBAR LA AUDITORÍA:
+-- Insertar cliente
+INSERT INTO clientes (nombre, correo) VALUES ('Carlos Pérez', 'carlos@mail.com');
+
+-- Actualizar cliente
+UPDATE clientes SET correo = 'carlos.nuevo@mail.com' WHERE nombre = 'Carlos Pérez';
+
+-- Eliminar cliente
+DELETE FROM clientes WHERE nombre = 'Carlos Pérez';
+
+CONSULTAR LA AUDITORIA:
+SELECT * FROM auditoria_clientes;
+
+EJERCICIO 9 USAR mysqldump PARA BACKUP DE BASE DE DATOS
+
+-- Backup de una base de datos específica
+mysqldump -u TU_USUARIO -p NOMBRE_BASE_DE_DATOS > backup_completo.sql
+
+-- Backup de todas las bases de datos
+mysqldump -u TU_USUARIO -p --all-databases > backup_full.sql
+
+9.2. Restauración desde un archivo de respaldo
+mysql -u TU_USUARIO -p NOMBRE_BASE_DE_DATOS < backup_completo.sql
+Esto recreará la estructura y los datos que existían en el momento del backup.
+
+9.3. Simulación de pérdida de datos y recuperación
+Borrar (por error o intencionalmente) una o más tablas/filas de la base de datos.
+Restaurar desde el archivo de respaldo usando el comando anterior.
+Verificar que la información haya vuelto correctamente.
